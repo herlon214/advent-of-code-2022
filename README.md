@@ -6,3 +6,4 @@
 | 2   | Pattern Matching | :star::star: |
 | 3   | HashMap          | :star::star: |
 | 4   |                  | :star::star: |
+| 5   | Stack            | :star::star: |
