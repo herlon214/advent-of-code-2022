@@ -41,8 +41,6 @@ impl Terminal {
         // Calculate folder sizes
         self.calc_size_max(Rc::clone(&self.root), max);
 
-        self.folder_sizes.pop();
-
         self.folder_sizes.clone()
     }
 
@@ -56,7 +54,6 @@ impl Terminal {
                     .children
                     .iter()
                     .map(|it| self.calc_size_max(Rc::clone(it), max.clone()))
-                    .filter(|it| it <= &max)
                     .sum();
 
                 // Append to count
@@ -150,8 +147,20 @@ fn main() {
 
     terminal.cd("/");
 
+    // Part 1
     let total: usize = terminal.fs_size_max(100_000).iter().sum();
     println!("Sum of max 100k: {:?}", total);
+
+    // Part 2
+    let mut total = terminal.fs_size_max(usize::MAX);
+    let root_size = total.pop().unwrap();
+    let disk_size = 70_000_000;
+    let free_size = disk_size - root_size;
+    let desired_size = 30_000_000 - free_size;
+
+    let mut target_folders: Vec<&usize> = total.iter().filter(|it| *it >= &desired_size).collect();
+    target_folders.sort();
+    println!("Delete dir with size: {:?}", target_folders.get(0).unwrap());
 }
 
 #[cfg(test)]
@@ -216,7 +225,14 @@ $ ls
 4060174 j
 8033020 d.log
 5626152 d.ext
-7214296 k";
+7214296 k
+dir y
+$ cd y
+$ ls
+dir z
+$ cd z
+$ ls
+1 zyx";
         let root = Rc::new(RefCell::new(Node::new(
             "/".to_string(),
             NodeType::Directory,
@@ -231,8 +247,8 @@ $ ls
             terminal.parse_line(line);
         }
 
-        let sum: usize = terminal.fs_size_max(100_000).iter().sum();
-        println!("Sum: {:?}", sum);
-        assert_eq!(sum, 95437);
+        let result = terminal.fs_size_max(100_000);
+        let sum = result.iter().sum::<usize>();
+        assert_eq!(sum, 95439);
     }
 }
