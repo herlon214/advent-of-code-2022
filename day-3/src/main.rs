@@ -1,8 +1,4 @@
-use std::{
-    collections::HashMap,
-    fs::File,
-    io::{BufRead, BufReader},
-};
+use std::collections::HashMap;
 
 fn calc_priority(input: char) -> usize {
     let mut tmp = input.clone();
@@ -67,7 +63,7 @@ fn intersect<'a>(first: &'a str, second: &'a str) -> char {
     panic!("repeated character not found")
 }
 
-fn identify_group(group: Vec<String>) -> char {
+fn identify_group(group: Vec<&str>) -> char {
     let mut map: HashMap<&char, bool> = HashMap::new();
     let group_chars: Vec<Vec<char>> = group.iter().map(|it| it.chars().collect()).collect();
 
@@ -91,34 +87,27 @@ fn identify_group(group: Vec<String>) -> char {
 }
 
 fn main() {
-    let file = File::open("input").unwrap();
-    let reader = BufReader::new(file);
+    let input = include_str!("../input");
     let mut repeated_total = 0;
     let mut group_total = 0;
-    let mut group: Vec<String> = vec![];
+    let mut group: Vec<&str> = vec![];
 
-    for line in reader.lines() {
-        match line {
-            Ok(content) => {
-                let (first, second) = parse_line(&content);
-                let repeated = intersect(first, second);
-                // Part 1
-                repeated_total += calc_priority(repeated);
+    for line in input.lines() {
+        let (first, second) = parse_line(&line);
+        let repeated = intersect(first, second);
+        // Part 1
+        repeated_total += calc_priority(repeated);
 
-                // Part 2
-                group.push(content.clone());
-                if group.len() == 3 {
-                    let group_badge = identify_group(group);
-                    group_total += calc_priority(group_badge);
+        // Part 2
+        group.push(line);
+        if group.len() == 3 {
+            let group_badge = identify_group(group);
+            group_total += calc_priority(group_badge);
 
-                    // Reset the group
-                    group = vec![];
-                }
-            }
-            Err(e) => panic!("Failed to read line: {}", e.to_string()),
+            // Reset the group
+            group = vec![];
         }
     }
-
     println!("Total sum of repeated items priority: {}", repeated_total);
     println!("Sum of group badges: {}", group_total);
 }

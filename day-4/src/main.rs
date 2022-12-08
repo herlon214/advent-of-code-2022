@@ -1,8 +1,3 @@
-use std::{
-    fs::File,
-    io::{BufRead, BufReader},
-};
-
 #[derive(Clone)]
 struct Assignment {
     start: usize,
@@ -59,27 +54,21 @@ impl Pair {
 }
 
 fn main() {
-    let file = File::open("input").unwrap();
-    let reader = BufReader::new(file);
+    let input = include_str!("../input");
     let mut total_full_overlaps = 0;
     let mut total_any_overlaps = 0;
 
-    for line in reader.lines() {
-        match line {
-            Ok(content) => {
-                let pair = Pair::new(&content);
+    for line in input.lines() {
+        let pair = Pair::new(&line);
 
-                // Part 1
-                if pair.overlap_full() {
-                    total_full_overlaps += 1;
-                }
+        // Part 1
+        if pair.overlap_full() {
+            total_full_overlaps += 1;
+        }
 
-                // Part 2
-                if pair.overlap_any() {
-                    total_any_overlaps += 1;
-                }
-            }
-            Err(e) => panic!("Failed to read line: {}", e.to_string()),
+        // Part 2
+        if pair.overlap_any() {
+            total_any_overlaps += 1;
         }
     }
 

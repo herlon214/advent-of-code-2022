@@ -1,8 +1,3 @@
-use std::{
-    fs::File,
-    io::{BufRead, BufReader},
-};
-
 #[derive(Debug, Clone)]
 enum Shape {
     Rock,
@@ -37,7 +32,7 @@ fn parse_shape(input: &str, player: Player) -> Shape {
     };
 }
 
-fn parse_round(line: String) -> (Shape, Shape) {
+fn parse_round(line: &str) -> (Shape, Shape) {
     let parts: Vec<&str> = line.split(' ').collect();
     let shape_one = parse_shape(parts.get(0).unwrap(), Player::One);
     let shape_two = parse_shape(parts.get(1).unwrap(), Player::Two);
@@ -79,23 +74,17 @@ fn decision(input: (Shape, Shape)) -> (Shape, Shape) {
 }
 
 fn main() {
-    let file = File::open("input").unwrap();
-    let reader = BufReader::new(file);
+    let input = include_str!("../input");
     let mut score_one: usize = 0;
     let mut score_two: usize = 0;
 
-    for line in reader.lines() {
-        match line {
-            Ok(content) => {
-                // Part 1
-                // let round = parse_round(content);
-                let round = decision(parse_round(content));
-                let score = calc_score(round);
-                score_one += score.0;
-                score_two += score.1;
-            }
-            Err(e) => panic!("Failed to read line: {}", e.to_string()),
-        }
+    for line in input.lines() {
+        // Part 1
+        // let round = parse_round(content);
+        let round = decision(parse_round(line));
+        let score = calc_score(round);
+        score_one += score.0;
+        score_two += score.1;
     }
 
     println!("Player A: {}", score_one);

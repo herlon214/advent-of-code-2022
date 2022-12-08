@@ -86,25 +86,6 @@ impl Terminal {
         parent
     }
 
-    fn ls(&self) {
-        let current = self.pwd.borrow();
-        let children = &current.children;
-
-        if children.len() == 0 {
-            println!("- Folder is empty -");
-        }
-
-        for item in children {
-            let current = item.borrow();
-            println!("{}", current);
-        }
-    }
-
-    fn print_dir(&self) {
-        let current = self.pwd.borrow_mut();
-        println!("Current dir: {}", current.name);
-    }
-
     fn parse_line(&mut self, line: &str) {
         // Command
         if line.starts_with('$') {
@@ -131,7 +112,7 @@ impl Terminal {
 }
 
 fn main() {
-    let input = include_str!("input");
+    let input = include_str!("../input");
 
     let root = Rc::new(RefCell::new(Node::new(
         "/".to_string(),
@@ -196,7 +177,6 @@ mod tests {
         terminal.parse_line("$ cd fchrtcbh");
         terminal.parse_line("$ ls");
         terminal.parse_line("61765 nlr");
-        terminal.ls();
 
         assert_eq!(terminal.calc_size_max(root, usize::MAX), 119165);
     }
@@ -241,7 +221,6 @@ $ ls
         let mut terminal = Terminal::new(Rc::clone(&root), Rc::clone(&root));
 
         terminal.cd("d");
-        terminal.ls();
 
         for line in input.lines() {
             terminal.parse_line(line);

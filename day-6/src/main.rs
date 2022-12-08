@@ -39,7 +39,7 @@ fn identify_marker(input: &str, marker_type: MarkerType) -> usize {
 }
 
 fn main() {
-    let input = include_str!("input");
+    let input = include_str!("../input");
 
     // Part 1
     println!(

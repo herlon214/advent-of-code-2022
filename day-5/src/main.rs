@@ -104,7 +104,7 @@ impl From<Vec<String>> for Stacks {
 }
 
 fn main() {
-    let content = include_str!("input");
+    let content = include_str!("../input");
     let original_state: Stacks = content
         .lines()
         .take(8)
