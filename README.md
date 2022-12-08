@@ -9,3 +9,4 @@
 | 5   | Stack               | :star::star: |
 | 6   | HashSet             | :star::star: |
 | 7   | Interior Mutability | :star::star: |
+| 8   | Prefix Sum          | :star::star: |
