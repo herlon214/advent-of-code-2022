@@ -5,15 +5,23 @@ enum Direction {
     Up,
     Down,
     Left,
+    UpLeft,
+    DownLeft,
     Right,
+    UpRight,
+    DownRight,
 }
 
 impl Direction {
     fn as_tuple(&self) -> (i32, i32) {
         match self {
             Direction::Up => (0, 1),
+            Direction::UpRight => (1, 1),
             Direction::Down => (0, -1),
+            Direction::DownRight => (1, -1),
             Direction::Left => (-1, 0),
+            Direction::UpLeft => (-1, 1),
+            Direction::DownLeft => (-1, -1),
             Direction::Right => (1, 0),
         }
     }
@@ -92,40 +100,16 @@ impl Point {
         match (diff_x, diff_y) {
             (2, 0) => self.move_to(&Direction::Right),
             (-2, 0) => self.move_to(&Direction::Left),
-            (-2, n) if n > 0 => {
-                self.move_to(&Direction::Up);
-                self.move_to(&Direction::Left);
-            }
-            (2, n) if n > 0 => {
-                self.move_to(&Direction::Up);
-                self.move_to(&Direction::Right);
-            }
-            (2, n) if n < 0 => {
-                self.move_to(&Direction::Down);
-                self.move_to(&Direction::Right);
-            }
-            (-2, n) if n < 0 => {
-                self.move_to(&Direction::Down);
-                self.move_to(&Direction::Left);
-            }
             (0, 2) => self.move_to(&Direction::Up),
             (0, -2) => self.move_to(&Direction::Down),
-            (1, 2) => {
-                self.move_to(&Direction::Right);
-                self.move_to(&Direction::Up);
-            }
-            (1, -2) => {
-                self.move_to(&Direction::Right);
-                self.move_to(&Direction::Down);
-            }
-            (-1, 2) => {
-                self.move_to(&Direction::Left);
-                self.move_to(&Direction::Up);
-            }
-            (-1, -2) => {
-                self.move_to(&Direction::Left);
-                self.move_to(&Direction::Down);
-            }
+            (-2, n) if n > 0 => self.move_to(&Direction::UpLeft),
+            (-1, 2) => self.move_to(&Direction::UpLeft),
+            (2, n) if n > 0 => self.move_to(&Direction::UpRight),
+            (1, 2) => self.move_to(&Direction::UpRight),
+            (2, n) if n < 0 => self.move_to(&Direction::DownRight),
+            (1, -2) => self.move_to(&Direction::DownRight),
+            (-2, n) if n < 0 => self.move_to(&Direction::DownLeft),
+            (-1, -2) => self.move_to(&Direction::DownLeft),
 
             _ => unreachable!("Diff x {} diff y {}", diff_x, diff_y),
         }
