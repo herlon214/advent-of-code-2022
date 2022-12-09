@@ -29,10 +29,10 @@ impl Follow for Point {
         let mut tail = (self.0 as i32, self.1 as i32);
         let diff: (i32, i32) = (tail.0 - head.0, tail.1 - head.1);
 
-        println!("-----------");
-        println!("Head {:?}", head);
-        println!("Tail {:?}", tail);
-        println!("Diff {:?}", diff);
+        // println!("-----------");
+        // println!("Head {:?}", head);
+        // println!("Tail {:?}", tail);
+        // println!("Diff {:?}", diff);
 
         match diff {
             // ..H.T..
@@ -216,16 +216,16 @@ impl Grid {
             })
             .collect();
 
-        for (i, knot) in knots.iter().rev().enumerate() {
-            self.tag_position(*knot, char::from_digit(i as u32, 10).unwrap());
-        }
+        // for (i, knot) in knots.iter().rev().enumerate() {
+        //     self.tag_position(*knot, char::from_digit(i as u32, 10).unwrap());
+        // }
 
         // Tag last knot
-        // let last = knots.last().unwrap();
-        // if self.grid[last.0][last.1] != '#' {
-        //     self.tag_position(*last, '#');
-        //     self.tail_counter += 1;
-        // }
+        let last = knots.last().unwrap();
+        if self.grid[last.0][last.1] != '#' {
+            self.tag_position(*last, '#');
+            self.tail_counter += 1;
+        }
 
         // Update
         self.knots = knots;
@@ -270,7 +270,7 @@ fn main() {
 
     let mut grid = Grid::new(400, (50, 200), 1);
     for line in input.lines() {
-        grid.print();
+        // grid.print();
         // std::thread::sleep(Duration::from_secs(1));
         grid.walk(Movement::parse(line));
     }
