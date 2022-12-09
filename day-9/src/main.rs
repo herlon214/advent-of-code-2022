@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{collections::HashSet, thread, time::Duration};
 
 type Point = (usize, usize);
 
@@ -24,113 +24,185 @@ impl Follow for Point {
             _ => false,
         }
     }
+
     fn calc_move(&self, target: Point) -> Point {
         let head = (target.0 as i32, target.1 as i32);
         let mut tail = (self.0 as i32, self.1 as i32);
         let diff: (i32, i32) = (tail.0 - head.0, tail.1 - head.1);
 
-        println!("-----------");
-        println!("Head {:?}", head);
-        println!("Tail {:?}", tail);
-        println!("Diff {:?}", diff);
+        println!("\t\tTHE DIFF IS {:?} => tail {:?}", diff, tail);
 
         match diff {
-            // ..H.T..
+            // x
+            // 0.....T
+            // 1......
+            // 2.....H
+            //  543210 <- y
+            //
+            // T (50, 200) -> (0, 0)
+            // H (50, 202) -> (0, 2)
+            // (0, 1)
             (2, 0) => {
-                tail.1 -= 1;
+                tail.0 -= 1;
             }
-
-            // ..T.H..
             (-2, 0) => {
-                tail.1 += 1;
+                tail.0 += 1;
             }
-
-            // ...T...
-            // .......
-            // ...H...
             (0, 2) => {
-                tail.0 += 1;
+                tail.1 -= 1;
             }
-
-            // ...H...
-            // .......
-            // ...T...
             (0, -2) => {
-                tail.0 -= 1;
-            }
-
-            // ...T..
-            // ......
-            // ..H...
-            (n, 2) if n > 0 => {
-                tail.0 += 1;
-                tail.1 -= 1;
-            }
-
-            // ..T...
-            // H.....
-            // ......
-            (2, n) if n > 0 => {
-                tail.0 += 1;
-                tail.1 -= 1;
-            }
-
-            // ......
-            // H.....
-            // ..T...
-            (2, n) if n < 0 => {
-                tail.0 -= 1;
-                tail.1 -= 1;
-            }
-
-            // H.....
-            // ......
-            // .T....
-            (n, -2) if n > 0 => {
-                tail.0 -= 1;
-                tail.1 -= 1;
-            }
-
-            // T.....
-            // ......
-            // .H....
-            (n, 2) if n < 0 => {
-                tail.0 += 1;
                 tail.1 += 1;
             }
 
-            // ......
-            // T.....
-            // ..H...
-            (-2, n) if n > 0 => {
-                tail.0 += 1;
-                tail.1 += 1;
-            }
-
-            // ..H...
-            // ......
-            // .T....
-            (n, -2) if n < 0 => {
+            // x
+            // 0...T..
+            // 1.....H
+            // 2......
+            //  543210 <- y
+            //
+            // T (50, 203) -> (2, 0)
+            // H (48, 204) -> (0, 1)
+            // (-1, +1)
+            (2, -1) => {
                 tail.0 -= 1;
                 tail.1 += 1;
             }
 
-            // ..H...
-            // T.....
-            // ......
-            (-2, n) if n < 0 => {
+            // x
+            // 0.....H
+            // 1......
+            // 2....T.
+            //  543210 <- y
+            //
+            // H (46, 202) -> (0, 0)
+            // T (47, 204) -> (1, 2)
+            // (-1, -1)
+            (1, 2) => {
+                tail.0 -= 1;
+                tail.1 -= 1;
+            }
+
+            // x
+            // 0.....T
+            // 1......
+            // 2....H.
+            //  543210 <- y
+            //
+            // H (47, 204) -> (1, 2)
+            // T (46, 202) -> (0, 0)
+            // (1, 1)
+            (-1, -2) => {
+                tail.0 += 1;
+                tail.1 += 1;
+            }
+
+            // x
+            // 0....H.
+            // 1......
+            // 2.....T
+            //  543210 <- y
+            //
+            // H (48, 202) -> (1, 0)
+            // T (47, 204) -> (0, 2)
+            // (1,-1)
+            (-1, 2) => {
+                tail.0 += 1;
+                tail.1 -= 1;
+            }
+
+            // x
+            // 0.....T
+            // 1...H..
+            // 2......
+            //  543210 <- y
+            //
+            // H (56, 202) -> (2, 1)
+            // T (54, 201) -> (0, 0)
+            // (+1,+1)
+            (-2, -1) => {
+                tail.0 += 1;
+                tail.1 += 1;
+            }
+
+            // x
+            // 0....T.
+            // 1......
+            // 2.....H
+            //  543210 <- y
+            //
+            // H (57, 200) -> (2, 0)
+            // T (55, 201) -> (0, 1)
+            // (+1,-1)
+            (-2, 1) => {
+                tail.0 += 1;
+                tail.1 -= 1;
+            }
+
+            // x
+            // 0.....H
+            // 1...T..
+            // 2......
+            //  543210 <- y
+            //
+            // H (54, 197) -> (0, 0)
+            // T (56, 198) -> (2, 1)
+            // (-1,-1)
+            (2, 1) => {
+                tail.0 -= 1;
+                tail.1 -= 1;
+            }
+
+            // x
+            // 0....T.
+            // 1......
+            // 2.....H
+            //  543210 <- y
+            //
+            // H (53, 198) -> (0, 2)
+            // T (54, 196) -> (1, 0)
+            // (-1,1)
+            (1, -2) => {
                 tail.0 -= 1;
                 tail.1 += 1;
             }
 
-            _ => unreachable!("Diff {:?}", diff),
+            // x
+            // 0...H..
+            // 1......
+            // 2.....T
+            //  543210 <- y
+            //
+            // H (302, 298) -> (2, 0)
+            // T (300, 300) -> (0, 2)
+            // (-1,1)
+            (-2, 2) => {
+                tail.0 -= 1;
+                tail.1 += 1;
+            }
+
+            // x
+            // 0...H..
+            // 1......
+            // 2.....T
+            //  543210 <- y
+            //
+            // H (300, 302) -> (0, 2)
+            // T (302, 300) -> (2, 0)
+            // (-1,1)
+            (2, -2) => {
+                tail.0 -= 1;
+                tail.1 += 1;
+            }
+
+            _ => unreachable!("Diff {:?} with head={:?} and tail={:?}", diff, head, tail),
         }
 
         (tail.0 as usize, tail.1 as usize)
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 enum Direction {
     Up,
     Down,
@@ -170,7 +242,7 @@ struct Grid {
     grid: Vec<Vec<char>>,
     head: Point,
     knots: Vec<Point>,
-    tail_counter: i32,
+    tail_counter: HashSet<Point>,
 }
 
 impl Grid {
@@ -190,7 +262,7 @@ impl Grid {
             grid,
             head: start,
             knots: vec![start; knots_number],
-            tail_counter: 0,
+            tail_counter: HashSet::new(),
         }
     }
 
@@ -204,13 +276,23 @@ impl Grid {
         let knots: Vec<Point> = self
             .knots
             .iter()
-            .map(|it| {
-                if it.is_tailing(prev) {
-                    return *it;
+            .enumerate()
+            .map(|(idx, knot)| {
+                if knot.is_tailing(prev) {
+                    // println!("\t[TAIL] {:?} is tailing {:?}", &knot, &prev);
+
+                    return *knot;
                 }
 
-                let new_position = prev.calc_move(*it);
+                let new_position = prev.calc_move(*knot);
+
+                println!("\t[TAIL] Moving from {:?} to {:?}", &knot, new_position);
+
                 prev = new_position;
+
+                if idx == &self.knots.len() - 1 {
+                    self.tail_counter.insert(new_position.clone());
+                }
 
                 new_position
             })
@@ -234,19 +316,25 @@ impl Grid {
     fn walk(&mut self, movement: Movement) {
         let calc = movement.0.as_tuple();
 
-        for _ in 0..movement.1 {
-            if self.grid[self.head.0][self.head.1] == 'H' {
-                self.grid[self.head.0][self.head.1] = '.';
-            }
-            let mut new_position = (self.head.0 as i32, self.head.1 as i32);
-            new_position.0 += calc.0;
-            new_position.1 += calc.1;
-
-            self.head = (new_position.0 as usize, new_position.1 as usize);
-            self.tag_position(self.head, 'H');
-            // self.move_tail();
-            self.move_knots();
+        if self.grid[self.head.0][self.head.1] == 'H' {
+            self.grid[self.head.0][self.head.1] = '.';
         }
+
+        let mut new_position = (self.head.0 as i32, self.head.1 as i32);
+
+        new_position.0 += calc.0;
+        new_position.1 += calc.1;
+
+        println!(
+            "[HEAD] Moving {:?} from {:?} to {:?}",
+            movement.0, &self.head, new_position
+        );
+
+        self.head = (new_position.0 as usize, new_position.1 as usize);
+
+        self.tag_position(self.head, 'H');
+
+        self.move_knots();
     }
 
     fn print(&self) {
@@ -258,7 +346,7 @@ impl Grid {
                 line.push(self.grid[i][j].to_string());
             }
 
-            output = format!("{}\n{}", output, line.join(" "));
+            output = format!("{}\n{}", output, line.join(""));
         }
 
         std::fs::write("output", output).expect("Unable to write file");
@@ -268,18 +356,24 @@ impl Grid {
 fn main() {
     let input = include_str!("../input");
 
-    let mut grid = Grid::new(400, (50, 200), 1);
-    for line in input.lines() {
+    let mut grid = Grid::new(900, (300, 300), 5);
+
+    let movements = input
+        .lines()
+        .map(|line| Movement::parse(line))
+        .flat_map(|(direction, count)| (0..count).map(move |_| (direction.clone(), 1)))
+        .collect::<Vec<_>>();
+
+    for movement in movements {
         grid.print();
-        // std::thread::sleep(Duration::from_secs(1));
-        grid.walk(Movement::parse(line));
+        grid.walk(movement);
     }
 
-    grid.tag_position((50, 200), 's');
+    grid.tag_position((300, 300), 's');
     grid.tag_position(grid.head, 'H');
     grid.tag_position(grid.knots[0], 'T');
     grid.print();
-    println!("Tail visited {} positions", grid.tail_counter);
+    println!("Tail visited {} positions", grid.tail_counter.len());
 }
 
 #[cfg(test)]
@@ -288,7 +382,7 @@ mod tests {
 
     #[test]
     fn small_grid() {
-        let grid = Grid::new(10, (0, 0), 1);
+        let grid = Grid::new(10, (0, 0), 2);
 
         assert_eq!(grid.grid.len(), 10);
         assert_eq!(grid.grid[0].len(), 10);
