@@ -1,5 +1,3 @@
-use std::collections::VecDeque;
-
 #[derive(Clone, PartialEq, Eq, Debug)]
 enum Op {
     NoOp = 1,
@@ -97,7 +95,7 @@ impl Cpu {
 
 fn main() {
     let input = include_str!("../input");
-    let instructions: VecDeque<Instruction> =
+    let instructions: Vec<Instruction> =
         input.lines().into_iter().map(|line| line.into()).collect();
 
     // Part 1
@@ -149,7 +147,7 @@ mod test {
 addx 3
 addx -5";
         let mut cpu = Cpu::new();
-        let mut instructions: VecDeque<Instruction> =
+        let mut instructions: Vec<Instruction> =
             input.lines().into_iter().map(|line| line.into()).collect();
 
         assert_eq!(cpu.strength(), 0);
@@ -180,12 +178,10 @@ addx -5";
         let input = include_str!("../example");
 
         let mut cpu = Cpu::new();
-        let mut instructions: VecDeque<Instruction> =
+        let mut instructions: Vec<Instruction> =
             input.lines().into_iter().map(|line| line.into()).collect();
 
-        while instructions.len() > 0 {
-            let instruction = instructions.pop_front().unwrap();
-
+        for instruction in instructions {
             cpu.exec(instruction);
         }
 
