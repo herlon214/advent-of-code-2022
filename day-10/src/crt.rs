@@ -2,19 +2,17 @@ use crate::instruction::*;
 
 pub struct Crt {
     pub cycle: i32,
-    pub cycle_counter: i32,
     pub cycle_counter_increment: i32,
     pub x: i32,
-    pub pixel_lines: Vec<char>,
+    pub pixel_lines: Vec<Vec<char>>,
 }
 
 impl Crt {
     pub fn new(cycle_counter_increment: i32) -> Self {
         Self {
             x: 1,
-            pixel_lines: vec![],
-            cycle_counter: 1,
-            cycle: 1,
+            pixel_lines: vec![vec!['.'; cycle_counter_increment as usize]],
+            cycle: 0,
             cycle_counter_increment,
         }
     }
@@ -47,26 +45,20 @@ impl Crt {
     pub fn exec(&mut self, instruction: &Instruction) {
         // Tick
         for _ in 0..instruction.cycles {
+            self.cycle += 1;
+
             // Draw
             let line = self.pixel_lines.last_mut().unwrap();
 
-            let cycle_pos = self.cycle;
-            let offset = self.cycle_counter - 1;
+            let offset = self.cycle - 1;
             if offset >= self.x - 1 && offset <= self.x + 1 {
                 // Lit pixel
-                line[offset as usize] = '#';
+                line[(offset) as usize] = '#';
             }
 
-            println!(
-                "Counter: {}, Offset: {}, X: {}",
-                self.cycle_counter, cycle_pos, self.x
-            );
-            self.cycle_counter += 1;
-            self.cycle += 1;
-
             // End cycle
-            if self.cycle_counter == self.cycle_counter_increment {
-                self.cycle_counter = 1;
+            if self.cycle == 40 {
+                self.cycle = 0;
                 self.pixel_lines
                     .push(vec!['.'; self.cycle_counter_increment as usize]);
             }

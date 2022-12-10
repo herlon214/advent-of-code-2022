@@ -23,6 +23,12 @@ fn main() {
     );
 
     // Part 2
+    let mut crt = Crt::new(40);
+    instructions.iter().for_each(|it| {
+        crt.exec(it);
+    });
+
+    crt.print();
 }
 
 #[cfg(test)]
@@ -114,16 +120,15 @@ addx -5";
             crt.exec(&instruction);
         }
 
-        for line in crt.pixel_lines {
-            println!(
-                "{}",
-                line.iter()
-                    .map(|it| it.to_string())
-                    .collect::<Vec<String>>()
-                    .join("")
-            );
-        }
+        let second_line = crt
+            .pixel_lines
+            .get(1)
+            .unwrap()
+            .iter()
+            .map(|it| it.to_string())
+            .collect::<Vec<String>>()
+            .join("");
 
-        panic!("Test");
+        assert_eq!(second_line, "###...###...###...###...###...###...###.");
     }
 }
