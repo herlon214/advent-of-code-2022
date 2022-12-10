@@ -5,14 +5,14 @@ pub struct Crt {
     pub cycle_counter: i32,
     pub cycle_counter_increment: i32,
     pub x: i32,
-    pub pixel_lines: Vec<Vec<char>>,
+    pub pixel_lines: Vec<char>,
 }
 
 impl Crt {
     pub fn new(cycle_counter_increment: i32) -> Self {
         Self {
             x: 1,
-            pixel_lines: vec![vec!['.'; cycle_counter_increment as usize]],
+            pixel_lines: vec![],
             cycle_counter: 1,
             cycle: 1,
             cycle_counter_increment,
