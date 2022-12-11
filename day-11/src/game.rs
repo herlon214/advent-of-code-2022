@@ -45,7 +45,7 @@ impl Game {
     pub fn start(&mut self) {
         let mut air: HashMap<usize, Vec<Item>> = HashMap::new();
 
-        for round in 0..self.rounds {
+        for _ in 0..self.rounds {
             for (i, monkey) in self.monkeys.iter_mut().enumerate() {
                 // Receive items
                 monkey.catch_items(&mut air, i);

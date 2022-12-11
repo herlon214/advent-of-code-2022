@@ -12,3 +12,4 @@
 | 8   | Prefix Sum          | :star::star: |
 | 9   | HashSet             | :star::star: |
 | 10  | Stack               | :star::star: |
+| 11  | HashMap             | :star::star: |
