@@ -1,7 +1,4 @@
-use std::{
-    collections::{HashSet, VecDeque},
-    time::Duration,
-};
+use std::collections::{HashSet, VecDeque};
 
 enum Direction {
     Up,
@@ -34,15 +31,8 @@ impl Direction {
 
 #[derive(Debug)]
 struct Node {
-    prev: u8,
     position: (usize, usize),
     counter: usize,
-}
-
-fn print(grid: Vec<Vec<char>>) {
-    for line in grid {
-        println!("{:?}", line);
-    }
 }
 
 fn bfs(grid: &mut Vec<Vec<char>>, start: (usize, usize)) -> usize {
@@ -50,7 +40,6 @@ fn bfs(grid: &mut Vec<Vec<char>>, start: (usize, usize)) -> usize {
     let mut visited: HashSet<(usize, usize)> = HashSet::new();
 
     queue.push_front(Node {
-        prev: 96,
         position: start,
         counter: 0,
     });
@@ -64,9 +53,6 @@ fn bfs(grid: &mut Vec<Vec<char>>, start: (usize, usize)) -> usize {
 
         // Found the target
         if val == 'E' as u8 {
-            println!("Found!");
-            dbg!(&current);
-
             return current.counter;
         }
 
@@ -110,23 +96,17 @@ fn bfs(grid: &mut Vec<Vec<char>>, start: (usize, usize)) -> usize {
             if dir.is_allowed(target_val, val) {
                 queue.push_back(Node {
                     position: pos,
-                    prev: val,
                     counter: current.counter + 1,
                 });
             }
         }
-
-        // print!("\x1B[2J\x1B[1;1H");
-        // print(grid.clone());
-
-        // std::thread::sleep(Duration::from_millis(50));
     }
 
     0
 }
 
 fn main() {
-    let mut grid: Vec<Vec<char>> = include_str!("../input")
+    let grid: Vec<Vec<char>> = include_str!("../input")
         .lines()
         .map(|line| line.chars().collect())
         .collect();
@@ -135,7 +115,32 @@ fn main() {
     // let total = bfs(&mut grid, (0, 0));
 
     // Part 1
-    let total = bfs(&mut grid, (20, 0));
+    let total = bfs(&mut grid.clone(), (20, 0));
 
-    println!("Part1 steps: {}", total);
+    println!("Part 1 steps: {}", total);
+
+    // Find all starting points with elevation 'a'
+    let mut starting_points: Vec<(usize, usize)> = vec![];
+    let mut completions: Vec<usize> = vec![];
+
+    grid.iter().enumerate().for_each(|(i, cols)| {
+        cols.iter().enumerate().for_each(|(j, ch)| {
+            if *ch == 'a' || *ch == 'S' {
+                starting_points.push((i, j));
+            }
+        })
+    });
+
+    // BFS on each starting point
+    for start in starting_points {
+        let result = bfs(&mut grid.clone(), start);
+        if result > 0 {
+            completions.push(result);
+        }
+    }
+
+    // Sort
+    completions.sort();
+
+    println!("Part 2 steps: {}", completions.first().unwrap());
 }
