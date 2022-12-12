@@ -12,15 +12,14 @@ fn main() {
     game.read_input(input);
     game.start();
 
-    println!("Monkey bussiness pt1: {}", game.monkey_business());
+    println!("Monkey bussiness part 1: {}", game.monkey_business());
 
     // Part 2
     let mut game = Game::new(10000, 1);
     game.read_input(input);
     game.start();
 
-    println!("Monkey bussiness pt2: {}", game.monkey_business());
-    println!("{:?}", game.monkeys);
+    println!("Monkey bussiness part 2: {}", game.monkey_business());
 }
 
 #[cfg(test)]

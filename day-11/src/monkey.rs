@@ -56,6 +56,7 @@ impl Monkey {
                 // Divide by a factor
                 new_item.worry_level /= decrease_lv;
 
+                // Product of all divisors
                 new_item.worry_level %= 9699690;
 
                 new_item
