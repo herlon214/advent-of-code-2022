@@ -1,50 +1,26 @@
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 enum Packet {
     Number(u32),
     List(Vec<Packet>),
 }
 
-impl Packet {
-    fn lower_than(&self, other: &Packet) -> bool {
+impl PartialOrd for Packet {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Packet {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         match (self, other) {
             // Number with number
             (Packet::Number(a), Packet::Number(b)) => {
-                println!("Comparing {} with {}", *a, *b);
-
-                return *a < *b;
+                return a.cmp(b);
             }
 
             // List with list
             (Packet::List(a), Packet::List(b)) => {
-                let mut left = a.iter();
-                let mut right = b.iter();
-
-                let mut decision = false;
-
-                loop {
-                    match (left.next(), right.next()) {
-                        // Both sides have items
-                        (Some(a), Some(b)) => {
-                            if a == b {
-                                continue;
-                            }
-
-                            if !a.lower_than(b) {
-                                return false;
-                            } else {
-                                decision = true;
-                            }
-                        }
-                        // Right side ran out of items
-                        (Some(_), None) => return decision,
-
-                        // Left side ran out of items
-                        (None, Some(_)) => return true,
-                        (_, _) => break,
-                    }
-                }
-
-                return true;
+                return a.cmp(b);
             }
 
             // Number with list
@@ -52,14 +28,14 @@ impl Packet {
                 let a = Packet::List(vec![Packet::Number(*x)]);
                 let b = Packet::List(y.clone());
 
-                return a.lower_than(&b);
+                return a.cmp(&b);
             }
             // List with number
             (Packet::List(x), Packet::Number(y)) => {
                 let a = Packet::List(x.clone());
                 let b = Packet::List(vec![Packet::Number(*y)]);
 
-                return a.lower_than(&b);
+                return a.cmp(&b);
             }
         }
     }
@@ -73,12 +49,14 @@ fn parse_line(input: &Vec<char>, start: usize) -> (Packet, usize) {
         let ch = input[current];
 
         match ch {
+            // New list
             '[' => {
                 // Create a new list
                 let new = parse_line(input, current + 1);
                 result.push(new.0);
                 current = new.1;
             }
+            // Parse digits
             '0'..='9' => {
                 let digits: String = input
                     .iter()
@@ -97,7 +75,9 @@ fn parse_line(input: &Vec<char>, start: usize) -> (Packet, usize) {
 
                 continue;
             }
+            // End current list
             ']' => break,
+            // No-op
             ',' => {}
             _ => panic!("Invalid char: {}", ch),
         }
@@ -108,33 +88,63 @@ fn parse_line(input: &Vec<char>, start: usize) -> (Packet, usize) {
     return (Packet::List(result), current);
 }
 
-fn pair_sum(input: &str) -> usize {
-    let mut sum: usize = 0;
+fn parse_packets(input: &str) -> Vec<Packet> {
     let input: Vec<&str> = input.lines().collect();
+    let mut packets: Vec<Packet> = vec![];
 
-    input.chunks(3).enumerate().for_each(|(i, chunk)| {
+    input.chunks(3).for_each(|chunk| {
         let a = parse_line(&chunk[0].chars().collect(), 0);
         let b = parse_line(&chunk[1].chars().collect(), 0);
-        let in_order = a.0.lower_than(&b.0);
-        println!(
-            "Pair {}: {:?} and {:?} = {}",
-            i, chunk[0], chunk[1], in_order
-        );
-        println!("--------------");
 
-        if in_order {
-            sum += i + 1;
-        }
+        packets.push(a.0);
+        packets.push(b.0);
     });
 
-    sum
+    packets
+}
+
+// Part 1
+fn pair_sum(packets: &Vec<Packet>) -> i32 {
+    packets
+        .chunks(2)
+        .enumerate()
+        .map(|(i, chunk)| {
+            if chunk[0] < chunk[1] {
+                return (i + 1) as i32;
+            }
+
+            return -1;
+        })
+        .filter(|it| *it >= 0)
+        .sum()
+}
+
+// Part 2
+fn decoder_key(packets: &Vec<Packet>) -> usize {
+    let mut packets = packets.clone();
+    let two = parse_line(&"[[2]]".chars().collect(), 0).0;
+    let six = parse_line(&"[[6]]".chars().collect(), 0).0;
+    packets.push(two.clone());
+    packets.push(six.clone());
+    packets.sort();
+
+    let two_pos = packets.iter().position(|it| it == &two).unwrap() + 1;
+    let six_pos = packets.iter().position(|it| it == &six).unwrap() + 1;
+
+    two_pos * six_pos
 }
 
 fn main() {
-    let sum = pair_sum(include_str!("../input"));
-    println!("Sum of the indices: {}", sum);
-}
+    // Parse
+    let input = include_str!("../input");
+    let packets = parse_packets(input);
 
+    // Part 1
+    println!("Index sum of sorted pairs: {}", pair_sum(&packets));
+
+    // Part 2
+    println!("Decoder key: {}", decoder_key(&packets));
+}
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -183,23 +193,23 @@ mod tests {
         let a = parse_line(&"[1,3,5]".chars().collect(), 0).0;
         let b = parse_line(&"[2,4,6]".chars().collect(), 0).0;
 
-        assert_eq!(a.lower_than(&b), true);
-        assert_eq!(b.lower_than(&a), false);
+        assert_eq!(a < b, true);
+        assert_eq!(b < a, false);
 
         let a = parse_line(&"[2,3,4]".chars().collect(), 0).0;
         let b = parse_line(&"[4]".chars().collect(), 0).0;
 
-        assert_eq!(a.lower_than(&b), true);
+        assert_eq!(a < b, true);
 
         let a = parse_line(&"[9]".chars().collect(), 0).0;
         let b = parse_line(&"[10]".chars().collect(), 0).0;
 
-        assert_eq!(a.lower_than(&b), true);
+        assert_eq!(a < b, true);
 
         let a = parse_line(&"[10]".chars().collect(), 0).0;
         let b = parse_line(&"[9]".chars().collect(), 0).0;
 
-        assert_eq!(a.lower_than(&b), false);
+        assert_eq!(a < b, false);
     }
 
     #[test]
@@ -207,48 +217,57 @@ mod tests {
         let a = parse_line(&"[1,1,3,1,1]".chars().collect(), 0).0;
         let b = parse_line(&"[1,1,5,1,1]".chars().collect(), 0).0;
 
-        assert_eq!(a.lower_than(&b), true);
+        assert_eq!(a < b, true);
 
         let a = parse_line(&"[[1],[2,3,4]]".chars().collect(), 0).0;
         let b = parse_line(&"[[1],4]".chars().collect(), 0).0;
 
-        assert_eq!(a.lower_than(&b), true);
+        assert_eq!(a < b, true);
 
         let a = parse_line(&"[9]".chars().collect(), 0).0;
         let b = parse_line(&"[[8,7,6]]".chars().collect(), 0).0;
 
-        assert_eq!(a.lower_than(&b), false);
+        assert_eq!(a < b, false);
 
         let a = parse_line(&"[[4,4],4,4]".chars().collect(), 0).0;
         let b = parse_line(&"[[4,4],4,4,4]".chars().collect(), 0).0;
 
-        assert_eq!(a.lower_than(&b), true);
+        assert_eq!(a < b, true);
 
         let a = parse_line(&"[7,7,7,7]".chars().collect(), 0).0;
         let b = parse_line(&"[7,7,7]".chars().collect(), 0).0;
 
-        assert_eq!(a.lower_than(&b), false);
+        assert_eq!(a < b, false);
 
         let a = parse_line(&"[]".chars().collect(), 0).0;
         let b = parse_line(&"[3]".chars().collect(), 0).0;
 
-        assert_eq!(a.lower_than(&b), true);
+        assert_eq!(a < b, true);
 
         let a = parse_line(&"[[[]]]".chars().collect(), 0).0;
         let b = parse_line(&"[[]]".chars().collect(), 0).0;
 
-        assert_eq!(a.lower_than(&b), false);
+        assert_eq!(a < b, false);
 
         let a = parse_line(&"[1,[2,[3,[4,[5,6,7]]]],8,9]".chars().collect(), 0).0;
         let b = parse_line(&"[1,[2,[3,[4,[5,6,0]]]],8,9]".chars().collect(), 0).0;
 
-        assert_eq!(a.lower_than(&b), false);
+        assert_eq!(a < b, false);
     }
 
     #[test]
     fn pair_sum_example() {
         let input = include_str!("../example");
+        let packets = parse_packets(input);
 
-        assert_eq!(pair_sum(input), 13);
+        assert_eq!(pair_sum(&packets), 13);
+    }
+
+    #[test]
+    fn sort_packets_example() {
+        let input = include_str!("../example");
+        let packets = parse_packets(input);
+
+        assert_eq!(decoder_key(&packets), 140);
     }
 }
