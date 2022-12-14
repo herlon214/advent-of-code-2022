@@ -15,3 +15,4 @@
 | 11  | HashMap              | :star::star: |
 | 12  | Breadth-first search | :star::star: |
 | 13  | Recursion            | :star::star: |
+| 14  | HashMap              | :star::star: |
