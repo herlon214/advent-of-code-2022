@@ -16,3 +16,4 @@
 | 12  | Breadth-first search | :star::star: |
 | 13  | Recursion            | :star::star: |
 | 14  | HashMap              | :star::star: |
+| 15  | VecDeque, HashMap    | :star::star: |
