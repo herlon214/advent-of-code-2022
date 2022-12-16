@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate lazy_static;
 
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::HashMap;
 
 use regex::Regex;
 
@@ -10,18 +10,9 @@ struct Valve {
     name: String,
     flow_rate: i32,
     links: Vec<String>,
-    link_idx: Option<usize>,
 }
 
-impl Valve {
-    fn next_link(&mut self) -> String {
-        let current = self.link_idx.unwrap_or(0);
-        let target = self.links.get(current).unwrap();
-        self.link_idx = Some((current + 1) % self.links.len());
-
-        target.clone()
-    }
-}
+impl Valve {}
 
 impl From<&str> for Valve {
     fn from(input: &str) -> Self {
@@ -44,23 +35,71 @@ impl From<&str> for Valve {
                 .split(", ")
                 .map(|it| it.to_string())
                 .collect::<Vec<String>>(),
-            link_idx: None,
         }
     }
 }
 
 fn main() {
     let input = include_str!("../example");
-    let valves: HashMap<String, Valve> = input
-        .lines()
-        .map(|it| {
-            let valve = Valve::from(it);
+    let mut valves: Vec<Valve> = input.lines().map(|it| Valve::from(it)).collect();
+    let max_time = 30;
 
-            (it.to_string(), valve)
-        })
+    valves.sort_unstable_by(|a, b| b.flow_rate.cmp(&a.flow_rate));
+
+    let valves_idx: HashMap<&String, usize> = valves
+        .iter()
+        .enumerate()
+        .map(|(i, v)| (&v.name, i))
         .collect();
 
-    dbg!(&valves);
+    let good_valves = valves.iter().filter(|valve| valve.flow_rate > 0).count();
+    let total_valves = valves.len();
+
+    let mut adj = vec![vec![0usize; 0]; total_valves];
+    let mut flow = vec![0i32; total_valves];
+
+    for valve in valves.iter() {
+        let i = valves_idx[&valve.name];
+        flow[i] = valve.flow_rate;
+        for w in valve.links.iter() {
+            adj[i].push(valves_idx[w]);
+        }
+    }
+
+    let aa = valves_idx[&"AA".to_string()];
+
+    let mm = 1 << good_valves;
+    let mut values = vec![vec![vec![0; mm]; total_valves]; max_time];
+
+    for t in 1..max_time {
+        for i in 0..total_valves {
+            let ii = 1 << i;
+            for x in 0..mm {
+                let mut current = values[t][i][x];
+                if ii & x != 0 && t >= 2 {
+                    current = current.max(values[t - 1][i][x - ii] + flow[i] * t as i32);
+                }
+
+                for &j in adj[i].iter() {
+                    current = current.max(values[t - 1][j][x]);
+                }
+
+                values[t][i][x] = current;
+            }
+        }
+    }
+
+    // Part 1
+    println!("Part 1: {}", values[29][aa][mm - 1]);
+
+    // Part 2
+    let mut best = 0;
+    for x in 0..mm / 2 {
+        let y = mm - 1 - x;
+        best = best.max(values[25][aa][x] + values[25][aa][y]);
+    }
+
+    println!("Part 2: {}", best);
 }
 
 #[cfg(test)]
@@ -76,7 +115,6 @@ mod tests {
                 name: "AA".to_string(),
                 flow_rate: 0,
                 links: vec!["DD".to_string(), "II".to_string(), "BB".to_string()],
-                link_idx: None,
             }
         )
     }
