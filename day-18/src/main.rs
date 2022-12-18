@@ -55,7 +55,7 @@ impl From<&str> for Point {
 }
 
 // Calculate the visible sides, returning points probably of trapped airs
-fn calc_sides(
+fn calc_faces(
     target: &Point,
     cubes: &mut HashMap<Point, usize>,
     visited: &mut HashSet<Point>,
@@ -102,11 +102,11 @@ fn sum_faces(cubes: &HashMap<Point, usize>) -> usize {
     cubes.into_iter().map(|it| it.1).sum()
 }
 
-fn extract_boundaries(cubes: &HashMap<Point, usize>) -> (Point, Point) {
+fn extract_boundaries(cubes: &HashSet<Point>) -> (Point, Point) {
     let mut min = Point::new(i32::MAX, i32::MAX, i32::MAX);
     let mut max = Point::new(i32::MIN, i32::MIN, i32::MIN);
 
-    for (point, _) in cubes.iter() {
+    for point in cubes.iter() {
         min.x = min.x.min(point.x);
         min.y = min.y.min(point.y);
         min.z = min.z.min(point.z);
@@ -119,24 +119,32 @@ fn extract_boundaries(cubes: &HashMap<Point, usize>) -> (Point, Point) {
     (min, max)
 }
 
-fn update_connected(
-    possible: &HashSet<Point>,
-    cubes: &mut HashMap<Point, usize>,
+fn count_external_faces(
+    cubes: &HashSet<Point>,
     boundaries: (Point, Point),
-) {
-    dbg!(&possible);
+) -> usize {
+    let mut counter = 0;
     let mut visited: HashSet<Point> = HashSet::new();
     let mut queue: VecDeque<Point> = VecDeque::new();
+    
+    // Add one point outside the real boundaries
+    queue.push_back(Point::new(boundaries.1.x, boundaries.1.y, boundaries.1.z));
 
-    // Add all the possible into the queue
-    possible.into_iter().for_each(|it| {
-        queue.push_back(it.clone());
-    });
+    // Increase the boundaries, so we can navigate from outside
+    let mut boundaries = boundaries.clone();
+    let padding = 2;
+    boundaries.0.x -= padding;
+    boundaries.0.y -= padding;
+    boundaries.0.z -= padding;
+    boundaries.1.x += padding;
+    boundaries.1.y += padding;
+    boundaries.1.z += padding;
 
     while queue.len() > 0 {
+        // Get the next item
         let current = queue.pop_front().unwrap();
 
-        // Already visited
+        // Check if was visited
         if visited.get(&current).is_some() {
             continue;
         }
@@ -151,53 +159,44 @@ fn update_connected(
 
         // Check all sides
         for side in vec![left, right, up, down, front, back] {
-            // Check if exist and wasn't visited yet
-            match (cubes.get_mut(&side), visited.get(&side)) {
-                (Some(block), None) => {
-                    println!("Current block: {:?} = {}", side, block);
-                    *block -= 1;
-                }
-                (None, None) if side.is_inside(&boundaries.0, &boundaries.1) => {
-                    queue.push_back(side);
-                }
-                _ => {}
+            // If it's a cube, sum the faces
+            if cubes.get(&side).is_some() {
+                counter += 1;
+            } else if side.is_inside(&boundaries.0, &boundaries.1){
+                queue.push_back(side);
             }
         }
 
+        // Add as visited
         visited.insert(current);
     }
+
+    counter
+
 }
 
 fn main() {
     let input = include_str!("../input");
-    let mut cubes: HashMap<Point, usize> = input
+    let cubes: HashSet<Point> = input
         .lines()
         .into_iter()
-        .map(|it| (Point::from(it), 6))
+        .map(|it| Point::from(it))
         .collect();
     let mut visited: HashSet<Point> = HashSet::new();
-    let mut trapped: HashSet<Point> = HashSet::new();
-    let (min, max) = extract_boundaries(&cubes);
 
     // Part 1
-    for (point, _) in cubes.clone().iter() {
-        let points = calc_sides(point, &mut cubes, &mut visited);
-        points
-            .into_iter()
-            .filter(|it| it.is_inside(&min, &max))
-            .for_each(|it| {
-                trapped.insert(it);
-            });
+    let mut cubes_faces: HashMap<Point, usize> = cubes.clone().into_iter().map(|it| (it, 6)).collect();
+    for (point, _) in cubes_faces.clone().iter() {
+        calc_faces(point, &mut cubes_faces, &mut visited);
     }
 
     // Sum
-    println!("Part 1, sum of showing faces: {}", sum_faces(&cubes));
+    println!("Part 1, sum of showing faces: {}", sum_faces(&cubes_faces));
 
     // Part 2
-    println!("Boundaries: {:?} {:?}", min, max);
-    println!("Trapped total: {}", trapped.len());
-    update_connected(&trapped, &mut cubes, (min, max));
-    println!("Part 2, sum of showing faces: {}", sum_faces(&cubes));
+    let boundaries = extract_boundaries(&cubes);
+    let external_faces = count_external_faces(&cubes, boundaries);
+    println!("Part 2, sum of showing faces: {}", external_faces);
 }
 
 #[cfg(test)]
@@ -229,7 +228,7 @@ mod tests {
         cubes.insert(Point::new(2, 0, 0), 6);
 
         for (point, _) in cubes.clone().iter() {
-            calc_sides(point, &mut cubes, &mut visited);
+            calc_faces(point, &mut cubes, &mut visited);
         }
 
         let sum: usize = cubes.iter().map(|it| it.1).sum();
@@ -247,10 +246,10 @@ mod tests {
     #[test]
     fn example_boundaries() {
         let input = include_str!("../example");
-        let cubes: HashMap<Point, usize> = input
+        let cubes: HashSet<Point> = input
             .lines()
             .into_iter()
-            .map(|it| (Point::from(it), 6))
+            .map(|it| Point::from(it))
             .collect();
 
         let min = Point::new(1, 1, 1);
@@ -270,7 +269,7 @@ mod tests {
 
         // Check all cubes
         for (point, _) in cubes.clone().iter() {
-            calc_sides(point, &mut cubes, &mut visited);
+            calc_faces(point, &mut cubes, &mut visited);
         }
 
         // Sum
@@ -280,35 +279,12 @@ mod tests {
     #[test]
     fn example_p2() {
         let input = include_str!("../example");
-        let mut cubes: HashMap<Point, usize> = input
+        let cubes: HashSet<Point> = input
             .lines()
             .into_iter()
-            .map(|it| (Point::from(it), 6))
+            .map(|it| Point::from(it))
             .collect();
-        let mut visited: HashSet<Point> = HashSet::new();
-        let mut trapped: HashSet<Point> = HashSet::new();
-        let min = Point::new(1, 1, 1);
-        let max = Point::new(3, 3, 6);
-
-        // Check all cubes
-        for (point, _) in cubes.clone().iter() {
-            let points = calc_sides(point, &mut cubes, &mut visited);
-            points
-                .into_iter()
-                .filter(|it| it.is_inside(&min, &max))
-                .for_each(|it| {
-                    trapped.insert(it);
-                });
-        }
-
-        assert_eq!(trapped.len(), 1);
-        assert_eq!(
-            trapped.get(&Point::new(2, 2, 5)),
-            Some(&Point::new(2, 2, 5))
-        );
-
-        update_connected(&trapped, &mut cubes, (min, max));
-
-        assert_eq!(sum_faces(&cubes), 58);
+        let boundaries = extract_boundaries(&cubes);
+        assert_eq!(count_external_faces(&cubes, boundaries), 58);
     }
 }
