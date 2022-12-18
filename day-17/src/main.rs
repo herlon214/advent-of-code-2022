@@ -1,6 +1,5 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::ops::{Add, Range};
-use std::time::Duration;
 
 // Point movements
 const DOWN: Point = Point(0, -1);
@@ -190,12 +189,6 @@ impl Cave {
         let spawn_pos = self.spawn_position();
         let mut shape = self.current_shape.relative_to(spawn_pos.clone());
 
-        // println!("---------------");
-        // println!(
-        //     "Spawning shape: {:?} at {:?}",
-        //     self.current_shape, spawn_pos
-        // );
-
         // Move the shape down until it's stable
         loop {
             // Apply jet movements
@@ -204,28 +197,21 @@ impl Cave {
             // Check if can move
             if shape.iter().all(|p| self.can_move(p, &jet_mov)) {
                 // Apply movement
-                // println!("--> Applying jet move: {:?}", jet_mov);
                 shape.iter_mut().for_each(|p| {
                     p.apply(&jet_mov);
                 });
-            } else {
-                // println!("--> Jet move ignored");
             }
-
             // Move down
             if shape.iter().all(|p| self.can_move(p, &DOWN)) {
-                // println!("Moving down");
                 // Apply down movement
                 shape.iter_mut().for_each(|p| {
                     p.apply(&DOWN);
                 });
             } else {
-                // println!("--> Reached floor");
                 break;
             }
         }
 
-        // println!("Block stable!");
         let prev_highest = self.highest_y;
 
         // Write blocks and get highest_y
@@ -238,60 +224,11 @@ impl Cave {
 
         self.deltas.push(self.highest_y - prev_highest);
 
-        // println!("Highest Y: {}", self.highest_y);
-        // println!("Lowest Y: {}", self.lowest_y);
 
         // Update next shape
         self.current_shape = self.current_shape.next_shape();
     }
 
-    pub fn print(&self) {
-        let grid = self.map_to_grid();
-
-        println!("");
-        for cols in grid.iter() {
-            let mut line = "".to_string();
-            for val in cols {
-                line = format!("{}{}", line, val);
-            }
-
-            println!("{}", line);
-        }
-    }
-
-    fn map_to_grid(&self) -> Vec<Vec<char>> {
-        // Get boundaries
-        let mut x_min = i32::MAX;
-        let mut x_max = i32::MIN;
-        let mut y_min = i32::MAX;
-        let mut y_max = i32::MIN;
-
-        for (point, _) in self.map.iter() {
-            if point.0 < x_min {
-                x_min = point.0;
-            }
-            if point.0 > x_max {
-                x_max = point.0;
-            }
-            if point.1 < y_min {
-                y_min = point.1;
-            }
-            if point.1 > y_max {
-                y_max = point.1;
-            }
-        }
-
-        println!("Boundaries: {x_min},{x_max} - {y_min},{y_max}");
-
-        let padding = 1;
-        let mut result = vec![vec!['.'; (x_max + padding) as usize]; (y_max + padding) as usize];
-
-        for (point, ch) in self.map.iter() {
-            result[(point.1 + padding / 2) as usize][(point.0 + padding / 2) as usize] = *ch;
-        }
-
-        result
-    }
 }
 
 fn main() {
@@ -307,10 +244,7 @@ fn main() {
     let mut cave = Cave::new(movements.clone());
 
     for _ in 0..2022 {
-        // println!(";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
         cave.tick();
-        // cave.print();
-        // std::thread::sleep(Duration::from_millis(1000));
     }
     println!("Part 1 tallest tower: {}", cave.highest_y);
 
