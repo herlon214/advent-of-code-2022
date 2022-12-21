@@ -22,3 +22,4 @@
 | 18  | Flood fill           | :star::star: |
 | 19  | Depth-first search   | :star::star: |
 | 20  | VecDeque             | :star::star: |
+| 20  | Binary search        | :star::star: |
