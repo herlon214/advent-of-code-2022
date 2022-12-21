@@ -24,7 +24,6 @@ fn main() {
         cave.tick();
     }
 
-    cave.print();
     println!("Part 1, stable sands: {}", cave.sands_stable.len());
 
     // Part 2
