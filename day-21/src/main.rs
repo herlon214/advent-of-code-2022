@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 struct Monkey {
     name: String,
-    value: Option<i64>,
+    value: Option<f64>,
     lhs: Option<String>,
     rhs: Option<String>,
     op: Option<String>,
@@ -16,14 +16,14 @@ impl From<&str> for Monkey {
         let val = parts.get(1).unwrap();
 
         let parts: Vec<&str> = val.split(" ").collect();
-        let mut value: Option<i64> = None;
+        let mut value: Option<f64> = None;
         let mut lhs: Option<String> = None;
         let mut rhs: Option<String> = None;
         let mut op: Option<String> = None;
 
         match parts.len() {
             1 => {
-                value = Some(parts.get(0).unwrap().parse::<i64>().unwrap());
+                value = Some(parts.get(0).unwrap().parse::<f64>().unwrap());
             }
             3 => {
                 lhs = Some(parts.get(0).unwrap().to_string());
@@ -43,7 +43,7 @@ impl From<&str> for Monkey {
     }
 }
 
-fn solve_equation(lhs: i64, op: &str, rhs: i64) -> i64 {
+fn solve_equation(lhs: f64, op: &str, rhs: f64) -> f64 {
     match op {
         "+" => lhs + rhs,
         "-" => lhs - rhs,
@@ -53,7 +53,7 @@ fn solve_equation(lhs: i64, op: &str, rhs: i64) -> i64 {
     }
 }
 
-fn solve_value(monkeys: &HashMap<String, Monkey>, root: &Monkey, human: i64) -> i64 {
+fn solve_value(monkeys: &HashMap<String, Monkey>, root: &Monkey, human: f64) -> f64 {
     if root.name == "humn" {
         return human;
     }
@@ -63,7 +63,6 @@ fn solve_value(monkeys: &HashMap<String, Monkey>, root: &Monkey, human: i64) -> 
         (Some(lhs), Some(op), Some(rhs)) => {
             let left = solve_value(monkeys, monkeys.get(lhs).unwrap(), human);
             let right = solve_value(monkeys, monkeys.get(rhs).unwrap(), human);
-
             solve_equation(left, &op, right)
         }
         _ => unreachable!("Failed to parse root: {:?}", root),
@@ -79,32 +78,43 @@ fn main() {
         .collect();
 
     // Part 1
-    let val = solve_value(&monkeys, monkeys.get("root").unwrap(), 5);
+    let human = monkeys.get("humn").unwrap();
+    let human_val = human.value.unwrap();
+    let val = solve_value(&monkeys, monkeys.get("root").unwrap(), human_val);
 
-    println!("Part 1: {val}");
+    println!("Part 1: {}", val as i64);
 
     // Part 2
     let root = monkeys.get("root").unwrap();
-    let mut n = 1i64;
-    loop {
+
+    // Resolve right
+    let rhs = monkeys.get(&root.rhs.clone().unwrap()).unwrap();
+    let right = solve_value(&monkeys, rhs, human_val);
+
+    let mut high = f32::MAX as f64;
+    let mut low = f32::MIN as f64;
+    let mut mid = 0f64;
+    while low < high {
         let lhs = monkeys.get(&root.lhs.clone().unwrap()).unwrap();
-        let rhs = monkeys.get(&root.rhs.clone().unwrap()).unwrap();
 
         // Resolve left
-        let left = solve_value(&monkeys, lhs, n);
+        mid = (high + low) / 2f64;
+        let left = solve_value(&monkeys, lhs, mid);
 
-        // Resolve right
-        let right = solve_value(&monkeys, rhs, n);
-
-        // Assert match
-        if left == right {
-            break;
+        if left > right {
+            low = mid;
+        } else if left < right {
+            high = mid;
         }
 
-        n += 1;
+        // Assert match
+        let diff = left - right;
+        if diff > -1f64 && diff < 1f64 {
+            break;
+        }
     }
 
-    println!("Part 2: {n}");
+    println!("Part 2: {}", mid);
 }
 
 #[cfg(test)]
@@ -119,9 +129,9 @@ mod tests {
             .map(|it| Monkey::from(it))
             .map(|it| (it.name.clone(), it))
             .collect();
-        let val = solve_value(&monkeys, monkeys.get("root").unwrap());
+        let val = solve_value(&monkeys, monkeys.get("root").unwrap(), 5f64);
 
-        assert_eq!(val, 152);
+        assert_eq!(val, 152f64);
     }
 
     #[test]
@@ -129,12 +139,11 @@ mod tests {
         let input: Monkey = "dbpl: 5".into();
         let expected = Monkey {
             name: "dbpl".to_string(),
-            value: Some(5),
+            value: Some(5f64),
             op: None,
             lhs: None,
             rhs: None,
         };
-
         assert_eq!(input, expected);
     }
     #[test]
@@ -147,7 +156,6 @@ mod tests {
             lhs: Some("drzm".to_string()),
             rhs: Some("dbpl".to_string()),
         };
-
         assert_eq!(input, expected);
     }
 }
