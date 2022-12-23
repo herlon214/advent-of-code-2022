@@ -24,3 +24,4 @@
 | 20  | VecDeque             | :star::star: |
 | 21  | Binary search        | :star::star: |
 | 22  | HashMap              | :star:       |
+| 23  | HashMap              | :star::star: |
